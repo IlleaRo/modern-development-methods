@@ -5,14 +5,26 @@
   [alphabet prev k prefix]
   (if (zero? k)
     (println prefix)
-    (loop [cur_set alphabet]
-      (when (seq cur_set)
-        (let [cur (first cur_set)]
-          (when (not= cur prev)
-            (gen-words alphabet cur (dec k) (str prefix cur)))
-          )
-        (recur (rest cur_set))))))
+    (letfn [(gen-loop [cur-set]
+              (when-let [s (seq cur-set)]
+                (let [cur (first s)]
+                  (when (not= cur prev)
+                    (gen-words alphabet cur (dec k) (str prefix cur))))
+                (gen-loop (rest s))))]
+      (gen-loop alphabet))))
 
+
+(defn remove-all [x lst]
+  (cond
+    (empty? lst) '()
+    (= x (first lst)) (remove-all x (rest lst))
+    :else (cons (first lst) (remove-all x (rest lst)))))
+
+(defn remove-duplicates [lst]
+  (if (empty? lst)
+    '()
+    (let [head (first lst)]
+      (cons head (remove-duplicates (remove-all head (rest lst)))))))
 
 (defn -main
   [& args]
@@ -20,7 +32,7 @@
     (do
       (println "Usage: <alphabet> <n>")
       (System/exit 1))
-    (let [alphabet (seq (first args))
+    (let [alphabet (remove-duplicates (seq (first args)))
           n (Integer/parseInt (second args))]
       (println "Alphabet:" alphabet " num:" n)
       (gen-words alphabet nil n ""))
