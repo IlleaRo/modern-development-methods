@@ -1,33 +1,37 @@
 (ns modern-development-methods.task-1-2)
 
-(defn gen-words
-  [alphabet n]
-  (loop [stack (list [nil n ""])]                           ; Вектор состояний
-    (when-let [[prev k prefix] (first stack)]
-      (if (zero? k)
-        (do
-          (println prefix)
-          (recur (rest stack)))
-        (let [next-stack
-              (loop [cs (seq alphabet)
-                     s (rest stack)]
-                (if (seq cs)
-                  (let [c (first cs)]
-                    (recur (rest cs)
-                           (if (= c prev)
-                             s                              ; Текущий и предыдущий символы совпадают - ничего не добавляем, передаем s как есть
-                             (cons [c (dec k) (str prefix c)] s))))
-                  s))]
-          (recur next-stack))))))
+(defn expand-stack
+  ([cs prev k prefix s]
+   (if (seq cs)
+     (let [c (first cs)]
+       (recur (rest cs) prev k prefix
+              (if (= c prev)
+                s
+                (cons [c (dec k) (str prefix c)] s))))
+     s)))
 
-(defn remove-duplicates [lst]
-  (loop [xs lst seen #{} acc '()]
-    (if (empty? xs)
-      (reverse acc)
-      (let [head (first xs)]
-        (if (seen head)
-          (recur (rest xs) seen acc)
-          (recur (rest xs) (conj seen head) (cons head acc)))))))
+(defn gen-words
+  ([alphabet n]
+   (gen-words alphabet n (list [nil n ""])))                ; стартовый стек
+  ([alphabet n stack]
+   (when-let [[prev k prefix] (first stack)]
+     (if (zero? k)
+       (do
+         (println prefix)
+         (recur alphabet n (rest stack)))
+       (let [next-stack (expand-stack (seq alphabet) prev k prefix (rest stack))]
+         (recur alphabet n next-stack))))))
+
+(defn remove-duplicates
+  ([lst]
+   (remove-duplicates lst #{} '()))
+  ([xs seen acc]
+   (if (empty? xs)
+     (reverse acc)
+     (let [head (first xs)]
+       (if (seen head)
+         (recur (rest xs) seen acc)
+         (recur (rest xs) (conj seen head) (cons head acc)))))))
 
 (defn -main
   [& args]
