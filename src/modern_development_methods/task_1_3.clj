@@ -1,15 +1,15 @@
 (ns modern-development-methods.task-1-3)
 
 (defn my-map [f coll]
-  (reduce (fn [acc x] (concat acc (list (f x)))) `() coll))
+  (reduce (fn [acc x] (conj acc (f x))) `[] coll))
 
 (defn my-filter [f coll]
   (reduce
    (fn [acc x]
      (if (f x)
-       (concat acc (list x))
+       (conj acc x)
        acc))
-   `() coll))
+   `[] coll))
 
 (defn -main
   [& args]
