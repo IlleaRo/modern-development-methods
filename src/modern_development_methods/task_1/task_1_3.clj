@@ -1,4 +1,4 @@
-(ns modern-development-methods.task-1-3)
+(ns modern-development-methods.task-1.task-1-3)
 
 (defn my-map [f coll]
   (reduce (fn [acc x] (conj acc (f x))) `[] coll)) ; Если мы используем вектор, то conj добавляет в конец

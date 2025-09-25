@@ -1,4 +1,4 @@
-(ns modern-development-methods.task-1-4)
+(ns modern-development-methods.task-1.task-1-4)
 
 (defn gen-words
   [alphabet n]

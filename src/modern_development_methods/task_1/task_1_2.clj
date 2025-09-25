@@ -1,4 +1,4 @@
-(ns modern-development-methods.task-1-2)
+(ns modern-development-methods.task-1.task-1-2)
 
 (defn expand-stack
   ([cs prev k prefix s]
