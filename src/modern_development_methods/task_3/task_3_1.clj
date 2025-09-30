@@ -4,66 +4,37 @@
 
 (defn split-into-n [n coll]
   (let [len (count coll)
-        base-size (quot len n)                              ; размер каждой части
-        remainder (mod len n)                               ; остаток
-        sizes (concat (repeat (dec n) base-size)            ; N - 1 равных частей
-                      [(+ base-size remainder)])]           ; Последняя включает остаток от деления
-    (loop [s sizes
-           c coll
-           acc []]
+        base-size (quot len n)
+        remainder (mod len n)
+        sizes (concat (repeat remainder (inc base-size))    ; rem штук по base+1
+                      (repeat (- n remainder) base-size))] ; остальные по base
+    (loop [s sizes, c coll, acc []]
       (if (empty? s)
         acc
         (recur (rest s)
                (drop (first s) c)
                (conj acc (take (first s) c)))))))
 
-(defn get-cpu-cores
-  "Безопасно получает количество CPU ядер"
-  []
+(defn get-cpu-cores []
   (try
     (let [cores (.availableProcessors (Runtime/getRuntime))]
-      (println "Количество ядер процессора:" cores)
       cores)
     (catch Exception e
       (println "Ошибка при получении информации о процессоре:" (.getMessage e))
       nil)))
 
-; Разбить последовательность на чанки, исходя из количества ядер или каких-то констант
-
-(defn heavy-inc [n]
-  (Thread/sleep 100)
-  (inc n))
-
-
-; Map, которая каждый элемент вычисляет в отдельном потоке (из-за doall неленивая вариация)
-(defn parallel-map [f coll]
-  (->> coll
-       (map (fn [x] (future (f x))))
-       (doall)
-       (map deref)
-       (doall)
-       ))
-
 (defn parallel-filter [f coll]
-  (let [cores (get-cpu-cores)]
-    (if (not (= cores nil))
-      (println (split-into-n cores coll))
-      (println (split-into-n core_const coll))
-      )))
+  (let [cores (or (get-cpu-cores) core_const)
+        chunks (split-into-n cores coll)]
+    (->> chunks
+         (map #(future (filter f %)))
+         (doall)                                            ; Это обязательно
+         (map deref)
+         (doall)                                            ; Это нужно, чтобы получить результат сейчас
+         (apply concat))))
 
 (defn -main
   [& _]
-  ;(println (get-cpu-cores))
-  ;(time
-  ;  (->> (iterate inc 0)
-  ;       (take 10)
-  ;       (map heavy-inc)
-  ;       (doall)))
-  ;
-  ;(time
-  ;  (->> (iterate inc 0)
-  ;       (take 10)
-  ;       (parallel-map heavy-inc)
-  ;       ))
-
-  (parallel-filter #(inc %) (range 1 17)))
+  (time (doall (filter #(zero? (mod % 2)) (range 1 100000))))
+  (time (parallel-filter #(zero? (mod % 2)) (range 1 1000000)))
+  (shutdown-agents))
