@@ -28,7 +28,7 @@
     (* h S)))
 
 
-(defn bench [label fns]
+(defn bench [label fns]                                     ; Модная ф-ия для вывода)
   (println "=== " label " ===")
   (doseq [[tag f] fns]
     (print tag "-> ")

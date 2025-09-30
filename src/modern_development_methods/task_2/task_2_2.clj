@@ -24,13 +24,29 @@
          (iterate integral-step)
          (map (fn [[x sum]] [x sum])))))                    ; сохраняем пары [координата, значение]
 
-(def memoized-integral-stream (memoize trapezoid-integral-stream))  ; Мемоизация нужна только для демонстрации
-                                                                    ; возможности работать с разными входным ф-ями
+; var 1. Только для определенной ф-ии и шага
+; ----------------------------------------------
+(def specific-integral-seq (trapezoid-integral-stream test_f test_h))
+
+(defn get-integral-at-specific [x]
+  (let [steps (long (/ x test_h))]
+    (second (nth specific-integral-seq steps))))
+
+; ----------------------------------------------
+
+
+
+; var 2. Для разных ф-ий и шага, но с мемоизацией
+; ----------------------------------------------
+
+(def memoized-integral-stream (memoize trapezoid-integral-stream)) ; Мемоизация по ф-ям и шагам
 
 (defn get-trapezoid-stream-integral [f x h]
   (let [integral-seq (memoized-integral-stream f h)         ; Нужно работать с заданным h
         steps (long (/ x h))]
     (second (nth integral-seq steps))))
+; ----------------------------------------------
+
 
 (defn -main
   [& _]
@@ -40,6 +56,11 @@
   (time (get-trapezoid-integral test_f 50 test_h))
   (time (get-trapezoid-integral test_f 45 test_h))
   (println "Stream func:")
+  (time (get-integral-at-specific 40))
+  (time (get-integral-at-specific 30))
+  (time (get-integral-at-specific 50))
+  (time (get-integral-at-specific 45))
+  (println "Stream func universe:")
   (time (get-trapezoid-stream-integral test_f 40 test_h))
   (time (get-trapezoid-stream-integral test_f 30 test_h))
   (time (get-trapezoid-stream-integral test_f 50 test_h))
