@@ -48,20 +48,29 @@
 ; ----------------------------------------------
 
 
+(defn measure-ms [f]
+  (let [t0 (System/nanoTime)
+        _ (f)
+        t1 (System/nanoTime)]
+    (/ (- t1 t0) 1e6)))                                     ; миллисекунды
+
+(defn do-test [f n]
+  (let [times (for [i (range n)]
+                (let [m (+ 1 i)                   ; увеличиваем m каждый шаг
+                      t0 (System/nanoTime)
+                      _ (f test_f m test_h)
+                      t1 (System/nanoTime)]
+                  (/ (- t1 t0) 1e6)))]
+    {:avg (/ (reduce + times) n)
+     :min (apply min times)
+     :max (apply max times)}))
+
+
+
 (defn -main
   [& _]
   (println "Basic func:")
-  (time (get-trapezoid-integral test_f 40 test_h))
-  (time (get-trapezoid-integral test_f 30 test_h))
-  (time (get-trapezoid-integral test_f 50 test_h))
-  (time (get-trapezoid-integral test_f 45 test_h))
+  (println (do-test get-trapezoid-integral 100))
+  (println (do-test get-trapezoid-integral 1000))
   (println "Stream func:")
-  (time (get-integral-at-specific 40))
-  (time (get-integral-at-specific 30))
-  (time (get-integral-at-specific 50))
-  (time (get-integral-at-specific 45))
-  (println "Stream func universe:")
-  (time (get-trapezoid-stream-integral test_f 40 test_h))
-  (time (get-trapezoid-stream-integral test_f 30 test_h))
-  (time (get-trapezoid-stream-integral test_f 50 test_h))
-  (time (get-trapezoid-stream-integral test_f 45 test_h)))
+  (println (do-test get-trapezoid-stream-integral 1000)))
