@@ -27,9 +27,9 @@
   (let [cores (or (get-cpu-cores) core_const)
         chunks (split-into-n cores coll)]
     (->> chunks
-         (map #(future (filter f %)))
-         (doall)                                            ; Это обязательно
-         (map deref)
+         (map #(future (filter f %)))                       ; На каждый элемент создается отдельный future
+         (doall)                                            ; Этот блок необходим, чтобы все future выполнились параллельно, а не последовательно
+         (map deref)                                        ; Заблокировать выполнение до выполнения всех future
          (doall)                                            ; Это нужно, чтобы получить результат сейчас
          (apply concat))))
 
