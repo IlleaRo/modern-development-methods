@@ -6,20 +6,6 @@
 
 (def core_const 4)
 
-
-;(defn split-into-n [n coll]
-;  (let [len (count coll)
-;        base-size (quot len n)
-;        remainder (mod len n)
-;        sizes (concat (repeat remainder (inc base-size))    ; rem штук по base+1
-;                      (repeat (- n remainder) base-size))]  ; остальные по base
-;    (loop [s sizes, c coll, acc []]
-;      (if (empty? s)
-;        acc
-;        (recur (rest s)
-;               (drop (first s) c)
-;               (conj acc (take (first s) c)))))))
-
 (defn get-cpu-cores []
   (try
     (let [cores (.availableProcessors (Runtime/getRuntime))]
@@ -27,25 +13,6 @@
     (catch Exception e
       (println "Ошибка при получении информации о процессоре:" (.getMessage e))
       nil)))
-
-;
-;(defn parallel-lazy-map [cores-num f coll]
-;  (letfn [(step [chunk xs]
-;            (lazy-seq
-;              (when (seq xs)
-;                (let [new-fut (future (f (first xs)))
-;                      chs' (conj chunk new-fut)]
-;                  (if (>= (count chs') cores-num)
-;                    (cons @(first chs')
-;                          (step (rest chs') (rest xs)))
-;                    (step chs' (rest xs)))))))]
-;    (step [] coll)))
-;
-;
-;(defn parallel-lazy-filter [pred coll]
-;  (let [cores (or (get-cpu-cores) core_const)]
-;    (->> (parallel-lazy-map cores #(when (pred %) %) coll))))
-
 
 (defn pfilter [f coll]
   (let [cores (+ (or (get-cpu-cores) core_const) 2)
@@ -62,14 +29,23 @@
                         (remove nil?))))))]
     (step rets (drop cores rets))))
 
+(defn expensive-even?
+  [x]
+  (Thread/sleep 5)
+  (zero? (mod x 2)))
+
+(defn make-hdr [str]
+  (println "======= " str " ======="))
 
 (defn -main
   [& _]
-  (time (doall (filter #(zero? (mod % 2)) (range 1 1000))))
-  (time (doall (filter #(zero? (mod % 2)) (range 1 1000))))
-  (time (doall (pfilter #(zero? (mod % 2)) (range 1 1000))))
-  (time (doall (pfilter #(zero? (mod % 2)) (range 1 1000))))
-  (time (println (filter #(zero? (mod % 2)) (range 1 100))))
-  (time (println (doall (pfilter #(zero? (mod % 2)) (range 1 100)))))
-
+  (make-hdr "sequential filter")
+  (time (doall (filter expensive-even? (range 1 1000))))
+  (time (doall (filter expensive-even? (range 1 1000))))
+  (make-hdr "parallel filter")
+  (time (doall (pfilter expensive-even? (range 1 1000))))
+  (time (doall (pfilter expensive-even? (range 1 1000))))
+  (make-hdr "test parallel filter")
+  (println (take 20 (pfilter expensive-even? (range))))
+  (println (doall (pfilter expensive-even? (doall (take 20 (range))))))
   (shutdown-agents))
