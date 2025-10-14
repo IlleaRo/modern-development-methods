@@ -15,24 +15,24 @@
       nil)))
 
 (defn pfilter [f coll]
-  (let [cores (+ (or (get-cpu-cores) core_const) 2)
-        rets  (map (fn [x] (future (when (f x) x))) coll)
-        step (fn step [[x & xs :as vs] fs]
+  (let [cores (+ (or (get-cpu-cores) core_const) 2)         ; Вычисляем количество одновременных задач
+        rets (map (fn [x] (future (when (f x) x))) coll)    ; Создаем ленивую последовательность из объектов future
+        step (fn step [[x & xs :as vs] fs]                  ; Разбиваем аргументы коллекции на начало (x) и хвост (xs) и заворачиваем в vs
                (lazy-seq
-                 (if-let [s (seq fs)]
-                   (let [v (deref x)]
-                     (if (nil? v)
-                       (step xs (rest s))
-                       (cons v (step xs (rest s))))
-                   (->> vs
+                 (if-let [s (seq fs)]                       ; Если какие-то future еще запланированы
+                   (let [v (deref x)]                       ; Ждем завершение future - получаем ее результат
+                     (if (nil? v)                           ; Если элемент НЕ прошел проверку filter
+                       (step xs (rest s))                   ; Пропускаем элемент
+                       (cons v (step xs (rest s)))))        ; Добавляем элемент в результат
+                   (->> vs                                  ; Когда закончились futures необходимо обработать хвост
                         (map deref)
-                        (remove nil?))))))]
+                        (remove nil?)))))]
     (step rets (drop cores rets))))
 
 (defn expensive-even?
   [x]
   (Thread/sleep 5)
-  (zero? (mod x 2)))
+  (zero? (mod x 3)))
 
 (defn make-hdr [str]
   (println "======= " str " ======="))
