@@ -9,35 +9,34 @@
   (list
     (list
       ; Правила вывода констант
-      [(fn [expr vr] (c/constant? expr))]
-      [(fn [expr vr] (c/constant 0))]
+      [c/constant? identity]
+      [v/variable? identity]
 
-      ; Правила вывода переменных
-      [(fn [expr vr]
-         (and
-           (v/variable? expr)
-           (v/same-variables? expr vr)))
-       (fn [expr vr] (c/constant 1))]
-      [(fn [expr vr] (v/variable? expr))
-       (fn [expr vr] (c/constant 0))]
+      ; Правила вывода для дизъюнкции: A ∨ (B ∨ C), (A ∨ B) ∨ C ≡ A ∨ B ∨ C
+      [ops/disjunction?
+       (fn [expr]
+         (ops/disjunction (mapcat #(if (ops/disjunction? %)
+                                     (map dnf (ops/args %))
+                                     (list (dnf %)))
+                                  (ops/args expr))))]
 
-      ; Правила вывода для дизъюнкции: A | (B | C), (A | B) | C -> A | B | C
-      [(fn [expr vr] (ops/disjunction? expr))
-       (fn [expr vr]
-         (apply ops/disjunction
-                (map #(dnf % vr)
-                     (ops/args expr))))]
-
-      ; Правила вывода для конъюнкции: A & (B & C) -> A & B & C
-      [(fn [expr vr] (ops/conjunction? expr))
-       (fn [expr vr]
-         (apply ops/conjunction
-                (map #(dnf % vr)
-                     (ops/args expr))))]
+      [ops/conjunction?
+       (fn [expr]
+         (let
+           ; Правила вывода для конъюнкции - закон дистрибутивности: A ∧ (B ∨ C) ≡ (A ∧ B) ∨ (A ∧ C)
+           [dnf-args (mapcat #(if (ops/conjunction? %)
+                                (map dnf (ops/args %))
+                                (list (dnf %)))
+                             (ops/args expr))
+            founded-disjunct (first (filter ops/disjunction? dnf-args))]
+           (if (nil? founded-disjunct)
+             (ops/conjunction dnf-args)
+             (let [other-args (first (filter #(not (identical? founded-disjunct %)) dnf-args))]
+               (dnf (ops/disjunction (map #(dnf (ops/conjunction (list % other-args))) (ops/args founded-disjunct))))))))]
 
       ; Правила вывода для инверсии: ¬A
-      [(fn [expr vr] (ops/inversion? expr))
-       (fn [expr vr]
+      [ops/inversion?
+       (fn [expr]
          (let [arg (first (ops/args expr))]
            (cond
              ; ¬0 -> 1
@@ -50,30 +49,29 @@
 
              ; ¬¬A -> A (двойное отрицание)
              (ops/inversion? arg)
-             (dnf (first (ops/args arg)) vr)
+             (dnf (first (ops/args arg)))
 
              ; ¬(A | B) -> ¬A & ¬B (закон де Моргана)
              (ops/disjunction? arg)
              (apply ops/conjunction
-                    (map #(dnf (ops/inversion %) vr)
+                    (map #(dnf (ops/inversion %))
                          (ops/args arg)))
 
              ; ¬(A & B) -> ¬A | ¬B (закон де Моргана)
              (ops/conjunction? arg)
              (apply ops/disjunction
-                    (map #(dnf (ops/inversion %) vr)
+                    (map #(dnf (ops/inversion %))
                          (ops/args arg)))
 
              ; В остальных случаях просто применяем инверсию
              :else
-             (ops/inversion (dnf arg vr)))))]
+             (ops/inversion (dnf arg)))))]
 
       ; Правила вывода для импликации: A -> B эквивалентно ¬A | B
-      [(fn [expr vr] (ops/implication? expr))
-       (fn [expr vr]
+      [ops/implication?
+       (fn [expr]
          (let [[antecedent consequent] (ops/args expr)]
            (dnf (ops/disjunction
                   (ops/inversion antecedent)
-                  consequent)
-                vr)))]
+                  consequent))))]
       )))

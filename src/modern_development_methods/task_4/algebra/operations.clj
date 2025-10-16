@@ -36,4 +36,5 @@
 
 (defn args [expr]
   "Список аргументов выражения"
+  {:pre [(or (conjunction? expr) (disjunction? expr) (implication? expr))]}
   (rest expr))

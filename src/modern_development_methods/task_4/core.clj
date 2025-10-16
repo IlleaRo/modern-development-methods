@@ -1,6 +1,7 @@
 (ns modern-development-methods.task-4.core
   (:require [modern-development-methods.task-4.algebra.variable :as v]
             [modern-development-methods.task-4.algebra.constant :as c]
+            [modern-development-methods.task-4.algebra.operations :as ops]
             [modern-development-methods.task-4.rules :as rules]))
 
 
@@ -39,11 +40,14 @@
 (def constant? c/constant?)
 (def constant-value c/constant-value)
 
-(defn dnf [expr vr]
+(defn dnf [expr]
   "Функция преобразования выражения в форму dnf"
   ((some (fn [rule]
-           (if ((first rule) expr vr)
+           (if ((first rule) expr)
              (second rule)
              false))
          rules/dnf-rules)
-   expr vr))
+   expr))
+
+(defn -main [& _]
+  (dnf (ops/disjunction (c/constant 1) (c/constant 0))))
