@@ -1,17 +1,17 @@
 (ns modern-development-methods.task-4.algebra.operations)
 
-(defn conjunction [expr & rest]
+(defn conjunction [expr]
   "Порождение конъюнкции"
-  (cons ::conj (cons expr rest)))
+  (cons ::conj expr))
 
 (defn conjunction? [expr]
   "Проверка типа для конъюнкции"
   (= ::conj (first expr)))
 
 
-(defn disjunction [expr & rest]
+(defn disjunction [expr]
   "Порождение дизъюнкции"
-  (cons ::sum (cons expr rest)))
+  (cons ::disj expr))
 
 (defn disjunction? [expr]
   "Проверка типа для дизъюнкции"
@@ -20,7 +20,7 @@
 
 (defn inversion [expr]
   "Порождает инверсию"
-  (cons ::inv (cons expr rest)))
+  (list ::inv expr))
 
 (defn inversion? [expr]
   "Проверка типа для инверсии"
@@ -34,7 +34,7 @@
   "Проверка типа для импликации"
   (= ::impl (first expr)))
 
-(defn args [expr]
+(defn arguments [expr]
   "Список аргументов выражения"
-  {:pre [(or (conjunction? expr) (disjunction? expr) (implication? expr))]}
+  {:pre [(or (conjunction? expr) (disjunction? expr) (implication? expr) (inversion? expr))]}
   (rest expr))

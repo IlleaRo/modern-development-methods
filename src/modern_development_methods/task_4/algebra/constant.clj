@@ -11,4 +11,5 @@
 
 (defn constant-value [expr]
   "Получение значения константы"
-  {:pre [(constant? expr)]})
+  {:pre [(constant? expr)]}
+  (second expr))

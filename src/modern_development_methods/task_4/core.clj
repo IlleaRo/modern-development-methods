@@ -40,14 +40,35 @@
 (def constant? c/constant?)
 (def constant-value c/constant-value)
 
+(def disjunction ops/disjunction)
+(def conjunction ops/conjunction)
+(def inversion ops/inversion)
+(def implication ops/implication)
+
+
+(defn simplify [expr]
+  "Функция упрощения булевых выражений"
+  (if-let [action (some (fn [[check action]]
+                          (when (check expr)
+                            action))
+                        rules/simplify-rules)]
+    (let [result (action expr)]
+      ; Применяем рекурсивно, пока результат меняется
+      (if (= result expr)
+        result
+        (simplify result)))
+    expr))
+
 (defn dnf [expr]
-  "Функция преобразования выражения в форму dnf"
-  ((some (fn [rule]
-           (if ((first rule) expr)
-             (second rule)
-             false))
-         rules/dnf-rules)
-   expr))
+  "Функция, которая преобразует логическое выражение в ДНФ.
+  Применяет набор правил преобразования, чтобы упростить и преобразовать выражение в ДНФ."
+  (simplify ((some (fn [[check, action]]
+                     (if (check expr)
+                       action
+                       false))
+                   rules/dnf-rules)
+             expr)))
 
 (defn -main [& _]
-  (dnf (ops/disjunction (c/constant 1) (c/constant 0))))
+  (println (dnf (dnf (conjunction (list (variable 'A) (disjunction (list (variable 'B) (variable 'C))))))))
+  (println (dnf (conjunction (list (constant true) (variable 'A))))))
