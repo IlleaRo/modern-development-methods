@@ -2,7 +2,7 @@
 
 (defn variable [name]
   "Порождение переменной"
-  {:pre [(keyword? name)]}
+  {:pre [(or (keyword? name) (symbol? name))]}
   (list ::var name))
 
 (defn variable? [expr]

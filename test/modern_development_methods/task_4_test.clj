@@ -1,5 +1,6 @@
 (ns modern-development-methods.task-4-test
   (:require [clojure.test :refer :all :as test]
+            [modern-development-methods.task-4.algebra.variable :as v]
             [modern-development-methods.task-4.core :as sut]))
 
 (deftest variable-test
@@ -12,6 +13,20 @@
   (test/is (not (sut/same-variables?
                   (sut/variable :x)
                   (sut/variable :y)))))
+
+(deftest equal-test
+  (let [res-1 (sut/implication (list (sut/variable 'A) (sut/variable 'B)))
+        res-2 (sut/disjunction (list (sut/variable 'A) (sut/variable 'B)))
+        res-3 (sut/conjunction (list (sut/constant false) (sut/constant true)))
+        res-4 (sut/inversion (sut/disjunction (list (sut/variable 'A) (sut/variable 'B))))
+        answer-1 (sut/implication (list (sut/variable 'B) (sut/variable 'A)))
+        answer-2 (sut/disjunction (list (sut/variable 'B) (sut/variable 'A)))
+        answer-3 (sut/conjunction (list (sut/constant true) (sut/constant false)))
+        answer-4 (sut/inversion (sut/disjunction (list (sut/variable 'B) (sut/variable 'A))))]
+    (test/is (not (sut/expr-equal? res-1 answer-1)))
+    (test/is (sut/expr-equal? res-2 answer-2))
+    (test/is (sut/expr-equal? res-3 answer-3))
+    (test/is (sut/expr-equal? res-4 answer-4))))
 
 (deftest constant-test
   (test/is (sut/constant? (sut/constant true)))
@@ -61,5 +76,4 @@
   ; A ∧ (B ∨ C) ≡ (A ∧ B) ∨ (A ∧ C)
   (let [res (sut/dnf (sut/conjunction (list (sut/variable 'A) (sut/disjunction (list (sut/variable 'B) (sut/variable 'C))))))
         answer (sut/disjunction (list (sut/conjunction (list (sut/variable 'A) (sut/variable 'B))) (sut/conjunction (list (sut/variable 'A) (sut/variable 'C)))))]
-   (test/is (= res answer))))
-
+    (test/is (sut/expr-equal? res answer))))

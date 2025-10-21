@@ -44,6 +44,7 @@
 (def conjunction ops/conjunction)
 (def inversion ops/inversion)
 (def implication ops/implication)
+(def expr-equal? ops/expr-equal?)
 
 
 (defn simplify [expr]
@@ -70,5 +71,4 @@
              expr)))
 
 (defn -main [& _]
-  (println (dnf (dnf (conjunction (list (variable 'A) (disjunction (list (variable 'B) (variable 'C))))))))
-  (println (dnf (conjunction (list (constant true) (variable 'A))))))
+  (println (dnf (conjunction (list (variable 'A) (disjunction (list (variable 'B) (constant true))))))))
